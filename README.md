@@ -114,24 +114,34 @@ cloud-native-blog/
 docker build -t cnb-create:local ./services/create-post
 docker build -t cnb-list:local ./services/list-post
 docker build -t cnb-gateway:local ./gateway
+```
 3️⃣ Executar os containers
+
 CreatePost
+```
 docker run --rm -p 3001:3000 \
   -e AZURE_STORAGE_CONNECTION_STRING="<CONNECTION_STRING>" \
   -e POSTS_CONTAINER="posts" \
   cnb-create:local
+```
 ListPost
+```
 docker run --rm -p 3002:3000 \
   -e AZURE_STORAGE_CONNECTION_STRING="<CONNECTION_STRING>" \
   -e POSTS_CONTAINER="posts" \
   cnb-list:local
+```
 Gateway
+```
 docker run --rm -p 8081:80 \
   -e CREATE_URL=http://host.docker.internal:3001/ \
   -e LIST_URL=http://host.docker.internal:3002/ \
   cnb-gateway:local
+```
 4️⃣ Acessar a aplicação
+```
 http://localhost:8081
+```
 ✅ Funcionalidades Implementadas
 Criar posts com:
 
@@ -185,3 +195,4 @@ Observabilidade (logs e métricas)
 Luiz Felipe Carvalho Nascimento
 
 GitHub: https://github.com/luizcarvalho20
+Linkedin: https://linkedin.com/in/luizcarvalho20
