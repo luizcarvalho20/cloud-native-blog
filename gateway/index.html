@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Cloud Native Blog</title>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 16px;line-height:1.5}
+    .card{border:1px solid #ddd;border-radius:12px;padding:18px;margin:12px 0}
+    input,textarea,button{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid #ccc}
+    button{cursor:pointer}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:700px){.row{grid-template-columns:1fr}}
+    small{color:#666}
+  </style>
+</head>
+<body>
+  <h1>✅ Cloud-Native Blog</h1>
+  <p><small>NGINX Gateway + CreatePost/ListPost</small></p>
+
+  <div class="card">
+    <h2>Criar Post</h2>
+    <div class="row">
+      <input id="title" placeholder="Título" />
+      <input id="author" placeholder="Autor" />
+    </div>
+    <textarea id="content" rows="5" placeholder="Conteúdo"></textarea>
+    <button onclick="createPost()">Publicar</button>
+    <div id="createStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>Posts</h2>
+    <button onclick="loadPosts()">Atualizar lista</button>
+    <div id="posts"></div>
+  </div>
+
+<script>
+async function loadPosts(){
+  const postsDiv = document.getElementById("posts");
+  postsDiv.innerHTML = "Carregando...";
+  try{
+    const res = await fetch("/api/list");
+    const data = await res.json();
+    if(!Array.isArray(data)) throw new Error("Formato inesperado");
+    if(data.length === 0){ postsDiv.innerHTML = "<p>Nenhum post ainda.</p>"; return; }
+
+    postsDiv.innerHTML = data.map(p => `
+      <div class="card">
+        <h3>${escapeHtml(p.title || "(sem título)")}</h3>
+        <p>${escapeHtml(p.content || "")}</p>
+        <p><small>por ${escapeHtml(p.author || "anon")} • ${escapeHtml(p.createdAt || "")}</small></p>
+      </div>
+    `).join("");
+  }catch(e){
+    postsDiv.innerHTML = "Erro ao listar posts: " + e.message;
+  }
+}
+
+async function createPost(){
+  const status = document.getElementById("createStatus");
+  status.textContent = "Enviando...";
+  const payload = {
+    title: document.getElementById("title").value.trim(),
+    author: document.getElementById("author").value.trim(),
+    content: document.getElementById("content").value.trim()
+  };
+  try{
+    const res = await fetch("/api/create", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data?.error || "Falha ao criar");
+    status.textContent = "✅ Post criado! ID: " + data.id;
+    document.getElementById("content").value = "";
+    await loadPosts();
+  }catch(e){
+    status.textContent = "❌ " + e.message;
+  }
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+loadPosts();
+</script>
+</body>
+</html>
